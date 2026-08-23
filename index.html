@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>⚡ এইচএসসি পদার্থবিজ্ঞান ২য় - তাপগতিবিদ্যা(অধ্যায় ১)</title>
+  <title>⚡ এইচএসসি পদার্থ</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = 'physics-thermo_try';
+    const appId = 'Gk';
 
     let currentUser = null;
     let userProfile = null;
@@ -51,7 +51,7 @@
     let userAnswers = {};
 
     const totalQuestions = 3;
-    const correctAnswers = {"q1":"C","q2":"C","q3":"B"};
+    const correctAnswers = {"q1":"B","q2":"C","q3":"C"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -69,6 +69,484 @@
     };
 
     window.addEventListener('DOMContentLoaded', async () => {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          checkExistingProfile(user.uid);
+        } else {
+          try {
+            const cred = await signInAnonymously(auth);
+            currentUser = cred.user;
+            showScreen('profileSetupScreen');
+          } catch (err) {
+            console.error("Auth Error:", err);
+            showScreen('profileSetupScreen');
+          }
+        }
+      });
+      document.getElementById('quizForm').addEventListener('change', updateAnsweredCountAndSaveDraft);
+    });
+
+    const engToBngNum = (num) => {
+      return num.toString().split('').map(n => ['০','১','২','৩','৪','৫','৬','৭','৮','৯'][n] || n).join('');
+    };
+
+    async function updateAnsweredCountAndSaveDraft() {
+      let count = 0;
+      userAnswers = {};
+      for (let i = 1; i <= totalQuestions; i++) {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected) {
+          count++;
+          userAnswers['q' + i] = selected.value;
+        }
+      }
+      document.getElementById('answeredBadge').innerText = `উত্তর দেওয়া হয়েছে: ${engToBngNum(count)}/${engToBngNum(totalQuestions)}`;
+
+      if (currentUser) {
+        try {
+          const draftRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'draft_answers');
+          await setDoc(draftRef, { answers: userAnswers }, { merge: true });
+        } catch (e) {}
+      }
+    }
+
+    async function checkExistingProfile(uid) {
+      try {
+        const profileRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'profile');
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+          userProfile = profileSnap.data();
+          const examRef = doc(db, 'artifacts', appId, 'users', uid, 'data', 'exam_status');
+          const examSnap = await getDoc(examRef);
+          
+          if (examSnap.exists() && examSnap.data().score !== undefined) {
+            showResultPage(examSnap.data().score);
+          } else { startExam(); }
+        } else { showScreen('profileSetupScreen'); }
+      } catch (e) { showScreen('profileSetupScreen'); }
+    }
+
+    // Time Control Variables
+    const startStr = "2026-08-23T14:50:00+06:00";
+    const endStr = "2026-08-23T15:00:00+06:00";
+    const examStartTime = startStr ? new Date(startStr).getTime() : 0;
+    const examEndTime = endStr ? new Date(endStr).getTime() : null;
+
+    function isExamTimeValid() {
+      const now = Date.now();
+      if (examStartTime && now < examStartTime) {
+        showModal("পরীক্ষা এখনো শুরু হয়নি। নির্ধারিত সময়ে শুরু হবে, অনুগ্রহ করে অপেক্ষা করুন!");
+        return false;
+      }
+      if (examEndTime && now > examEndTime) {
+        showModal("পরীক্ষার নির্ধারিত সময় শেষ হয়ে গেছে! আপনি আর অংশগ্রহণ করতে পারবেন না।");
+        return false;
+      }
+      return true;
+    }
+
+    window.submitProfileAndStart = async function() {
+      if (!isExamTimeValid()) return;
+      const name = document.getElementById('studentNameInput').value.trim();
+      const college = document.getElementById('collegeNameInput').value.trim();
+      if (!name || !college) {
+        showModal("অনুগ্রহ করে আপনার নাম ও কলেজের নাম প্রদান করুন!");
+        return;
+      }
+      try {
+        const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'profile');
+        userProfile = { name, college };
+        await setDoc(profileRef, userProfile);
+        startExam();
+      } catch (e) { showModal("Error: " + e.message); }
+    };
+
+    async function startExam() {
+      if (!isExamTimeValid()) return;
+      
+      warningCount = 0;
+      userAnswers = {};
+
+      const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
+      const examSnap = await getDoc(examRef);
+
+      let startTime;
+      if (examSnap.exists() && examSnap.data().startTime) {
+        startTime = examSnap.data().startTime.toDate().getTime();
+      } else {
+        startTime = Date.now();
+        await setDoc(examRef, { startTime: serverTimestamp() }, { merge: true });
+      }
+
+      const draftRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'draft_answers');
+      const draftSnap = await getDoc(draftRef);
+      if (draftSnap.exists()) {
+        userAnswers = draftSnap.data().answers || {};
+        for (let key in userAnswers) {
+          const val = userAnswers[key];
+          const input = document.querySelector(`input[name="${key}"][value="${val}"]`);
+          if (input) input.checked = true;
+        }
+      }
+
+      const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      let remainingDuration = examDuration - elapsedTime;
+
+      // Force submit if absolute end time is near
+      if (examEndTime) {
+        const secondsUntilAbsoluteEnd = Math.floor((examEndTime - Date.now()) / 1000);
+        if (secondsUntilAbsoluteEnd < remainingDuration) {
+          remainingDuration = secondsUntilAbsoluteEnd;
+        }
+      }
+
+      totalSeconds = remainingDuration;
+
+      if (totalSeconds <= 0) {
+        await autoSubmitFromDraft();
+        return;
+      }
+
+      let count = 0;
+      for (let i = 1; i <= totalQuestions; i++) {
+        if (document.querySelector(`input[name="q${i}"]:checked`)) count++;
+      }
+      document.getElementById('answeredBadge').innerText = `উত্তর দেওয়া হয়েছে: ${engToBngNum(count)}/${engToBngNum(totalQuestions)}`;
+
+      enableAntiCheat();
+      showScreen('examArea');
+      if (window.MathJax) MathJax.typesetPromise();
+      startTimer();
+    }
+
+    function enableAntiCheat() {
+      document.onvisibilitychange = () => {
+        if (document.hidden && document.getElementById('examArea').style.display !== 'none') {
+          warningCount++;
+          document.getElementById('warningText').innerText = `ট্যাব পরিবর্তন: ${engToBngNum(warningCount)}/২`;
+          if (warningCount >= 2) {
+            showModal("⚠️ সতর্কতা! একাধিকবার ট্যাব পরিবর্তন করায় পরীক্ষা স্বয়ংক্রিয়ভাবে জমা হয়েছে!");
+            submitExam(true);
+          } else {
+            showModal(`⚠️ সতর্কবার্তা (${engToBngNum(warningCount)}/২): পরীক্ষা চলাকালীন ট্যাব পরিবর্তন করা নিষেধ!`);
+          }
+        }
+      };
+    }
+
+    function startTimer() {
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (totalSeconds <= 0) {
+          clearInterval(timerInterval);
+          showModal("সময় শেষ! আপনার খাতা জমা দেওয়া হচ্ছে।");
+          submitExam();
+          return;
+        }
+        totalSeconds--;
+        let mins = Math.floor(totalSeconds / 60);
+        let secs = totalSeconds % 60;
+        document.getElementById('timeDisplay').innerText = engToBngNum(`${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`);
+      }, 1000);
+    }
+
+    async function autoSubmitFromDraft() {
+      try {
+        const draftRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'draft_answers');
+        const draftSnap = await getDoc(draftRef);
+        if (draftSnap.exists()) { userAnswers = draftSnap.data().answers || {}; }
+
+        let score = 0;
+        for (let i = 1; i <= totalQuestions; i++) {
+          const qKey = 'q' + i;
+          if (userAnswers[qKey] === correctAnswers[qKey]) score++;
+        }
+        const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
+        await setDoc(examRef, { score: score, timestamp: serverTimestamp(), autoSubmitted: true }, { merge: true });
+
+        const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid);
+        await setDoc(lbRef, { uid: currentUser.uid, name: userProfile ? userProfile.name : "পরীক্ষার্থী", college: userProfile ? userProfile.college : "অজানা", score: score, timestamp: serverTimestamp() });
+        showResultPage(score);
+      } catch (e) { console.error("Auto Submit Error:", e); }
+    }
+
+    window.submitExam = async function(isTerminated = false) {
+      if (timerInterval) clearInterval(timerInterval);
+      document.onvisibilitychange = null;
+      let score = 0;
+      userAnswers = {};
+
+      for (let i = 1; i <= totalQuestions; i++) {
+        const qKey = 'q' + i;
+        const selected = document.querySelector(`input[name="${qKey}"]:checked`);
+        userAnswers[qKey] = selected ? selected.value : null;
+        if (selected && selected.value === correctAnswers[qKey]) score++;
+      }
+
+      if (currentUser && userProfile) {
+        try {
+          const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
+          await setDoc(examRef, { score: score, timestamp: serverTimestamp(), terminated: isTerminated }, { merge: true });
+          const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid);
+          await setDoc(lbRef, { uid: currentUser.uid, name: userProfile.name, college: userProfile.college, score: score, timestamp: serverTimestamp() });
+        } catch(err) {}
+      }
+      showResultPage(score);
+    };
+
+    function showResultPage(score) {
+      showScreen('resultArea');
+      document.getElementById('scoreDisplayVal').innerText = engToBngNum(score);
+      loadLeaderboard();
+      renderAnswerReview();
+      switchTab('leaderboard');
+    }
+
+    window.switchTab = function(tabName) {
+      if (tabName === 'leaderboard') {
+        document.getElementById('tabLbBtn').classList.add('active');
+        document.getElementById('tabReviewBtn').classList.remove('active');
+        document.getElementById('leaderboardTabContent').style.display = 'block';
+        document.getElementById('reviewTabContent').style.display = 'none';
+      } else {
+        document.getElementById('tabReviewBtn').classList.add('active');
+        document.getElementById('tabLbBtn').classList.remove('active');
+        document.getElementById('leaderboardTabContent').style.display = 'none';
+        document.getElementById('reviewTabContent').style.display = 'block';
+        if (window.MathJax) MathJax.typesetPromise();
+      }
+    };
+
+    function loadLeaderboard() {
+      const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+      onSnapshot(lbRef, (snapshot) => {
+        let lbData = [];
+        snapshot.forEach(doc => lbData.push(doc.data()));
+        lbData.sort((a, b) => b.score - a.score);
+
+        const tbody = document.getElementById('leaderboardBody');
+        tbody.innerHTML = '';
+        let myRank = '-';
+
+        if(lbData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#64748b;">এখনো কেউ পরীক্ষা দেয়নি।</td></tr>';
+            return;
+        }
+
+        lbData.forEach((row, index) => {
+          if (currentUser && row.uid === currentUser.uid) myRank = engToBngNum(index + 1);
+          let tr = document.createElement('tr');
+          tr.className = (currentUser && row.uid === currentUser.uid) ? 'my-row' : '';
+          let medal = index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : "";
+          tr.innerHTML = `
+            <td style="text-align: center;"><div class="rank-badge">${medal}${engToBngNum(index + 1)}</div></td>
+            <td style="font-weight: 600;">${row.name}</td>
+            <td style="font-size: 0.85rem; color:#475569;">${row.college}</td>
+            <td class="lb-score">${engToBngNum(row.score)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        document.getElementById('userRankVal').innerText = myRank !== '-' ? `#${myRank}` : '-';
+      }, (error) => {});
+    }
+
+    function renderAnswerReview() {
+      const reviewContainer = document.getElementById('reviewTabContent');
+      reviewContainer.innerHTML = '';
+      for (let i = 1; i <= totalQuestions; i++) {
+        const qKey = 'q' + i;
+        const origCard = document.getElementById(`qCard-${i}`);
+        if(!origCard) continue;
+        const cloneCard = origCard.cloneNode(true);
+        const userAns = userAnswers[qKey];
+        const correctAns = correctAnswers[qKey];
+
+        const options = cloneCard.querySelectorAll('input[type="radio"]');
+        options.forEach(input => {
+          input.disabled = true;
+          const label = input.closest('.option-label');
+          if (input.value === correctAns) label.classList.add('correct-option');
+          if (userAns && input.value === userAns) {
+            input.checked = true;
+            if (userAns !== correctAns) label.classList.add('wrong-option');
+          }
+        });
+        const solBox = cloneCard.querySelector('.solution-notes');
+        if(solBox) solBox.style.display = 'block';
+        reviewContainer.appendChild(cloneCard);
+      }
+      if (window.MathJax) MathJax.typesetPromise();
+    }
+  </script>
+
+  <style>
+    :root {
+      --blue-marker: #0038a8; --green-gel: #0b6623; --highlight-yellow: #fff3a8;
+      --paper-bg: #fdfbf7; --line-color: #e2e8f0; --margin-line: #ff8585;
+      --badge-red: #d92525; --bg-color: #f1f5f9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Hind Siliguri', sans-serif; background-color: var(--bg-color); color: #0f172a; line-height: 1.6; padding: 10px; }
+    .container { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); overflow: hidden; min-height: 85vh; position: relative; }
+    .header-banner { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; padding: 25px 20px; text-align: center; }
+    .header-banner h1 { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
+    .header-banner p { font-size: 0.9rem; color: #cbd5e1; margin-top: 5px; }
+    .header-banner .exam-end-time { font-size: 0.85rem; color: #93c5fd; font-weight: 600; margin-top: 10px; display: inline-block; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; }
+    .screen-section { padding: 30px 20px; }
+    .card { max-width: 420px; margin: 20px auto; border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; background: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #334155; }
+    .form-group input { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.95rem; outline: none; }
+    .form-group input:focus { border-color: var(--blue-marker); }
+    .btn { padding: 12px 20px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; width: 100%; margin-top: 10px; }
+    .btn-primary { background: var(--blue-marker); color: white; }
+    .timer-bar { position: sticky; top: 0; background: #ffffff; border-bottom: 2px solid var(--blue-marker); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; z-index: 90; }
+    .timer-box { font-size: 1.15rem; font-weight: 700; color: var(--badge-red); background: #fef2f2; padding: 4px 12px; border-radius: 20px; border: 1px solid #fca5a5; }
+    .warning-badge { font-size: 0.85rem; background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 6px; border: 1px solid #ffedd5; font-weight: 600; }
+    .answered-badge { font-size: 0.85rem; background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; border: 1px solid #bfdbfe; font-weight: 700; }
+    .notebook-paper { background-color: var(--paper-bg); background-image: linear-gradient(var(--line-color) 1px, transparent 1px); background-size: 100% 28px; padding: 25px 20px 25px 30px; position: relative; border-left: 3px solid var(--margin-line); }
+    .mcq-card { background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; margin-bottom: 20px; position: relative; }
+    .question-title { font-size: 1.05rem; font-weight: 700; color: var(--blue-marker); margin-bottom: 12px; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 580px) { .options-grid { grid-template-columns: 1fr; } }
+    .option-label { display: flex; align-items: center; padding: 10px 12px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
+    .option-label input { margin-right: 10px; accent-color: var(--blue-marker); transform: scale(1.1); }
+    .correct-option { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #15803d; font-weight: bold; }
+    .wrong-option { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c; font-weight: bold; }
+    .solution-notes { display: none; margin-top: 15px; padding: 14px; background: #f0fdf4; border-left: 4px solid var(--green-gel); border-radius: 0 8px 8px 0; font-family: 'Kalam', 'Hind Siliguri', cursive; color: var(--green-gel); font-size: 1rem; }
+    .solution-notes h4 { font-family: 'Hind Siliguri', sans-serif; color: var(--blue-marker); font-size: 0.95rem; margin-bottom: 4px;}
+    .highlight { background-color: var(--highlight-yellow); padding: 0 4px; border-radius: 3px; color: #000; font-weight: 600; }
+    .blue-heading { color: var(--blue-marker); font-weight: 700; }
+    .result-summary { background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
+    .score-badge { font-size: 2.2rem; font-weight: 800; color: var(--blue-marker); }
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+    .tab-btn { flex: 1; padding: 12px; background: #f1f5f9; border: none; font-family: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; border-top-left-radius: 8px; border-top-right-radius: 8px; color: #64748b; }
+    .tab-btn.active { background: var(--blue-marker); color: white; }
+    .lb-container { border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; background: white; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f1f5f9; font-weight: 700; color: #475569; font-size: 0.85rem; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    .my-row { background-color: #fef9c3 !important; }
+    .lb-score { color: var(--blue-marker); font-weight: 700; font-size: 1.1rem; text-align: center;}
+    .rank-badge { display: inline-block; background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; }
+    .footer-notice { text-align: center; padding: 16px 20px; background: linear-gradient(135deg, #090a0f 0%, #171922 50%, #050608 100%); color: #e2e8f0; font-size: 0.9rem; font-weight: 600; border-top: 2px solid #d4af37; box-shadow: inset 0 1px 3px rgba(255, 215, 0, 0.15); letter-spacing: 0.5px; }
+    .golden-text { background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 1.05rem; display: inline-block; text-shadow: 0 0 12px rgba(212, 175, 55, 0.3); }
+    .rimit-text { color: #ef4444 !important; background: none !important; -webkit-text-fill-color: #ef4444 !important; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 380px; text-align: center; width: 90%; }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay" id="customModal">
+    <div class="modal-content">
+      <div style="font-size: 2rem; margin-bottom: 10px;">🔔</div>
+      <p id="modalMessage" style="margin-bottom: 20px; font-weight: 600; font-size: 0.95rem; color: #334155;"></p>
+      <button class="btn btn-primary" onclick="closeModal()">ঠিক আছে</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="header-banner">
+      <h1>⚡ এইচএসসি পদার্থ</h1>
+      <p>গুরুত্বপূর্ণ এমসিকিউ পরীক্ষা ও ব্যাখ্যাসহ সমাধান</p>
+      <div class="exam-end-time">⏳ পরীক্ষা শেষের সময়: 2026-08-23 - 15:00</div>
+    </div>
+    <div id="profileSetupScreen" class="screen-section">
+      <div class="card">
+        <h3 style="color: var(--blue-marker); margin-bottom: 8px;">পরীক্ষার্থীর তথ্য</h3>
+        <p style="margin-bottom: 20px; color: #64748b; font-size: 0.85rem;">লিডারবোর্ডের জন্য আপনার সঠিক নাম ও কলেজের নাম দিন।</p>
+        <div class="form-group"><label>পরীক্ষার্থীর নাম:</label><input type="text" id="studentNameInput" placeholder="পূর্ণ নাম লিখুন" /></div>
+        <div class="form-group"><label>কলেজের নাম:</label><input type="text" id="collegeNameInput" placeholder="কলেজের নাম লিখুন" /></div>
+        <button class="btn btn-primary" onclick="submitProfileAndStart()">পরীক্ষা শুরু করুন 🚀</button>
+      </div>
+    </div>
+    <div id="examArea" style="display: none; background: #f8fafc;">
+      <div class="timer-bar">
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/৩</div>
+        <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
+        <div class="timer-box" id="timeDisplay">--:--</div>
+      </div>
+      <div class="notebook-paper">
+        <form id="quizForm">
+          <div class="mcq-card" id="qCard-1">
+            <div class="question-title">০১. সরল ছন্দিত স্পন্দনের সমীকরণ $ \frac{d^2x}{dt^2} + 16x = 0 $ হলে কণাটির কৌণিক কম্পাঙ্ক কত?</div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q1" value="A"> (ক) $ 2\text{ rad/s} $</label>
+              <label class="option-label"><input type="radio" name="q1" value="B"> (খ) $ 4\text{ rad/s} $</label>
+              <label class="option-label"><input type="radio" name="q1" value="C"> (গ) $ 8\text{ rad/s} $</label>
+              <label class="option-label"><input type="radio" name="q1" value="D"> (ঘ) $ 16\text{ rad/s} $</label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(খ)</span><br/> প্রমিত সমীকরণ $ \frac{d^2x}{dt^2} + \omega^2 x = 0 $ এর সাথে তুলনা করে পাই, $ \omega^2 = 16 \implies \omega = 4\text{ rad/s} $।
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-2">
+            <div class="question-title">০২. বাংলাদেশের সংবিধানে ‘মৌলিক অধিকার’ কোন ভাগে বর্ণিত হয়েছে?
+</div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) প্রথম ভাগ</label>
+              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) দ্বিতীয় ভাগ</label>
+              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) তৃতীয় ভাগ</label>
+              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) চতুর্থ ভাগ</label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(গ)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-3">
+            <div class="question-title">০৩. (a+b)^2=</div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q3" value="A"> (ক) a+b</label>
+              <label class="option-label"><input type="radio" name="q3" value="B"> (খ) a^2+2ab+b^2</label>
+              <label class="option-label"><input type="radio" name="q3" value="C"> (গ) $a^2+2ab+b^2$</label>
+              <label class="option-label"><input type="radio" name="q3" value="D"> (ঘ) None</label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(গ)</span><br/> 
+            </div>
+          </div>
+        </form>
+      </div>
+      <div style="padding: 20px; text-align: center; background: #fff; border-top: 1px solid #e2e8f0;">
+        <button type="button" class="btn btn-primary" style="max-width: 300px; font-size: 1.1rem; border-radius: 30px; padding: 14px;" onclick="submitExam()">পরীক্ষা জমা দিন</button>
+      </div>
+    </div>
+    <div id="resultArea" class="screen-section" style="display: none;">
+      <div class="result-summary">
+        <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
+        <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ ৩</span></div>
+        <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
+      </div>
+      <div class="nav-tabs">
+        <button id="tabLbBtn" class="tab-btn active" onclick="switchTab('leaderboard')">🏆 লিডারবোর্ড</button>
+        <button id="tabReviewBtn" class="tab-btn" onclick="switchTab('review')">📝 উত্তর পর্যালোচনা</button>
+      </div>
+      <div id="leaderboardTabContent">
+        <div class="lb-container">
+          <table>
+            <thead><tr><th style="width: 70px; text-align: center;">র‍্যাংক</th><th>নাম</th><th>কলেজ</th><th style="text-align: center;">নম্বর</th></tr></thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="reviewTabContent" class="notebook-paper" style="display: none;"></div>
+    </div>
+    <div class="footer-notice">
+      <span class="golden-text rimit-text">Developed by RIMIT</span> <br>
+      <span class="golden-text">Exam Question: Made by Tey</span>
+    </div>
+  </div>
+</body>
+</html>    window.addEventListener('DOMContentLoaded', async () => {
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           currentUser = user;
