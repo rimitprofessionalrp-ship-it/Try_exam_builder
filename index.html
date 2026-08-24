@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GK</title>
+  <title>uk-based</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,7 +43,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'Gk';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'GK';
 
     let currentUser = null;
     let userProfile = null;
@@ -54,9 +54,9 @@
     let timerInterval = null;
     let userAnswers = {};
 
-    const totalQuestions = 2;
+    const totalQuestions = 3;
 
-    const answerKeys = {"q1":"B","q2":"D"};
+    const answerKeys = {"q1":"B","q2":"D","q3":"C"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -169,8 +169,8 @@
       }
     }
 
-    const examStartTimeStr = "2026-08-24T15:05:00+06:00";
-    const examEndTimeStr = "2026-09-04T23:00:00+06:00";
+    const examStartTimeStr = "2026-08-24T15:30:00+06:00";
+    const examEndTimeStr = "2026-08-04T15:35:00+06:00";
     const examStartTime = examStartTimeStr ? new Date(examStartTimeStr).getTime() : 0;
     const examEndTime = examEndTimeStr ? new Date(examEndTimeStr).getTime() : null;
 
@@ -611,8 +611,8 @@
 
   <div class="container">
     <div class="header-banner">
-      <h1>GK</h1>
-      <p>৩০টি গুরুত্বপূর্ণ এমসিকিউ পরীক্ষা (৩০ মিনিট) ও লাইভ লিডারবোর্ড</p>
+      <h1>uk-based</h1>
+      <p>Pagol</p>
     </div>
     
     <!-- ১. নাম ও কলেজ ইনপুট স্ক্রিন -->
@@ -625,9 +625,9 @@
         
         <div class="schedule-box">
           <div>📅 পরীক্ষার সময়সূচি:</div>
-          • <strong>পরীক্ষা শুরু:</strong> ২৪ আগস্ট ২০২৬, দুপুর ৩:০৫ টা<br>
-          • <strong>পরীক্ষা শেষ:</strong> ০৪ সেপ্টেম্বর ২০২৬, রাত ১১:০০ টা<br>
-          • <strong>সময়সীমা:</strong> ৪.৫ মিনিট (২টি প্রশ্ন)
+          • <strong>পরীক্ষা শুরু:</strong> ২৪ আগস্ট ২০২৬, দুপুর ৩:৩০ টা<br>
+          • <strong>পরীক্ষা শেষ:</strong> ০৪ আগস্ট ২০২৬, দুপুর ৩:৩৫ টা<br>
+          • <strong>সময়সীমা:</strong> ৪.৫ মিনিট (৩টি প্রশ্ন)
         </div>
 
         <div class="form-group">
@@ -645,7 +645,7 @@
     <!-- ২. পরীক্ষা নেওয়ার স্ক্রিন -->
     <div id="examArea" style="display: none; background: #f8fafc;">
       <div class="timer-bar">
-        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/2</div>
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/3</div>
         <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
         <div class="timer-box" id="timeDisplay">4.5:00</div>
       </div>
@@ -667,16 +667,30 @@
           </div>
         
           <div class="mcq-card" id="qCard-2">
-            <div class="question-title">০২. Select C</div>
+            <div class="question-title">০২. Hui</div>
             <div class="options-grid">
-              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) A</label>
-              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) B</label>
-              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) $(a+b)^2$</label>
-              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) C</label>
+              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) $a+b^2$</label>
+              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) C</label>
+              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) A</label>
+              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) D</label>
             </div>
             <div class="solution-notes">
               <h4>ব্যাখ্যা ও সমাধান:</h4>
-              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ঘ)</span><br/> My rules🌚
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ঘ)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-3">
+            <div class="question-title">০৩. A</div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q3" value="A"> (ক) B</label>
+              <label class="option-label"><input type="radio" name="q3" value="B"> (খ) C</label>
+              <label class="option-label"><input type="radio" name="q3" value="C"> (গ) A</label>
+              <label class="option-label"><input type="radio" name="q3" value="D"> (ঘ) D</label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(গ)</span><br/> 
             </div>
           </div>
         </form>
@@ -692,7 +706,7 @@
       <div class="result-summary">
         <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
         <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
-        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 2</span></div>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 3</span></div>
         <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
       </div>
       
@@ -715,7 +729,7 @@
     
     <div class="footer-notice">
       <span class="golden-text">Developed by Rimit</span> <br>
-      <span class="golden-text">Exam Question: Made by Rimu</span>
+      <span class="golden-text">Exam Question: Made by Rimit</span>
     </div>
   </div>
 </body>
