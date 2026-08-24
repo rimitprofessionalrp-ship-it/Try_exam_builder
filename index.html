@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>⚡ এইচএসসি পদার্থ</title>
+  <title>⚡ এইচএসসি পদার্থবিজ্ঞান - পর্যায়বৃত্ত গতি (অধ্যায় ৮)</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,18 +40,18 @@
     const analytics = getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = 'Gk';
+    const appId = 'physics-periodic-motion-jhehhe';
 
     let currentUser = null;
     let userProfile = null;
     let warningCount = 0;
-    const examDuration = 300;
+    const examDuration = 1800;
     let totalSeconds = examDuration;
     let timerInterval = null;
     let userAnswers = {};
 
-    const totalQuestions = 3;
-    const correctAnswers = {"q1":"B","q2":"C","q3":"C"};
+    const totalQuestions = 2;
+    const correctAnswers = {"q1":"B","q2":"C"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -68,6 +68,30 @@
       document.getElementById('customModal').style.display = 'none';
     };
 
+    // ইন্টারনেট থেকে প্রমানিত সঠিক সময় নেওয়ার সুরক্ষিত ফাংশন
+    async function getRealServerTime() {
+      try {
+        const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Dhaka');
+        if (!res.ok) throw new Error("WorldTimeAPI error");
+        const data = await res.json();
+        return new Date(data.datetime).getTime();
+      } catch (e) {
+        try {
+          if (currentUser) {
+            const timeRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'time_check');
+            await setDoc(timeRef, { lastCheck: serverTimestamp() }, { merge: true });
+            const timeSnap = await getDoc(timeRef);
+            if (timeSnap.exists() && timeSnap.data().lastCheck) {
+              return timeSnap.data().lastCheck.toDate().getTime();
+            }
+          }
+        } catch (fbErr) {
+          console.error("Firebase server time fetch error:", fbErr);
+        }
+        return null;
+      }
+    }
+  
     window.addEventListener('DOMContentLoaded', async () => {
       onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -129,8 +153,8 @@
     }
 
     // Time Control Variables
-    const startStr = "2026-08-23T14:50:00+06:00";
-    const endStr = "2026-08-23T14:52:00+06:00";
+    const startStr = "2026-08-24T14:57:00+06:00";
+    const endStr = "2026-08-24T15:00:00+06:00";
     const examStartTime = startStr ? new Date(startStr).getTime() : 0;
     const examEndTime = endStr ? new Date(endStr).getTime() : null;
 
@@ -168,6 +192,11 @@
       
       warningCount = 0;
       userAnswers = {};
+      const nowTime = await getRealServerTime();
+      if (!nowTime) {
+        showModal("⚠️ সঠিক সার্ভার সময় নিশ্চিত করা যায়নি! পরীক্ষা শুরু করা সম্ভব হচ্ছে না।");
+        return;
+      }
 
       const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
       const examSnap = await getDoc(examRef);
@@ -450,9 +479,9 @@
 
   <div class="container">
     <div class="header-banner">
-      <h1>⚡ এইচএসসি পদার্থ</h1>
+      <h1>⚡ এইচএসসি পদার্থবিজ্ঞান - পর্যায়বৃত্ত গতি (অধ্যায় ৮)</h1>
       <p>গুরুত্বপূর্ণ এমসিকিউ পরীক্ষা ও ব্যাখ্যাসহ সমাধান</p>
-      <div class="exam-end-time">⏳ পরীক্ষা শেষের সময়: 2026-08-23 - 15:00</div>
+      <div class="exam-end-time">⏳ পরীক্ষা শেষের সময়: 2026-08-24 - 15:00</div>
     </div>
     <div id="profileSetupScreen" class="screen-section">
       <div class="card">
@@ -465,7 +494,7 @@
     </div>
     <div id="examArea" style="display: none; background: #f8fafc;">
       <div class="timer-bar">
-        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/৩</div>
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/২</div>
         <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
         <div class="timer-box" id="timeDisplay">--:--</div>
       </div>
@@ -486,27 +515,12 @@
           </div>
         
           <div class="mcq-card" id="qCard-2">
-            <div class="question-title">০২. বাংলাদেশের সংবিধানে ‘মৌলিক অধিকার’ কোন ভাগে বর্ণিত হয়েছে?
-</div>
+            <div class="question-title">০২. $(a+b)^2$</div>
             <div class="options-grid">
-              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) প্রথম ভাগ</label>
-              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) দ্বিতীয় ভাগ</label>
-              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) তৃতীয় ভাগ</label>
-              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) চতুর্থ ভাগ</label>
-            </div>
-            <div class="solution-notes">
-              <h4>ব্যাখ্যা ও সমাধান:</h4>
-              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(গ)</span><br/> 
-            </div>
-          </div>
-        
-          <div class="mcq-card" id="qCard-3">
-            <div class="question-title">০৩. (a+b)^2=</div>
-            <div class="options-grid">
-              <label class="option-label"><input type="radio" name="q3" value="A"> (ক) a+b</label>
-              <label class="option-label"><input type="radio" name="q3" value="B"> (খ) a^2+2ab+b^2</label>
-              <label class="option-label"><input type="radio" name="q3" value="C"> (গ) $a^2+2ab+b^2$</label>
-              <label class="option-label"><input type="radio" name="q3" value="D"> (ঘ) None</label>
+              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) a+b</label>
+              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) $a^2+2ab+b$</label>
+              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) $a^2+2ab+b^2$</label>
+              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) $a+2ab+b^2$</label>
             </div>
             <div class="solution-notes">
               <h4>ব্যাখ্যা ও সমাধান:</h4>
@@ -523,7 +537,7 @@
       <div class="result-summary">
         <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
         <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
-        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ ৩</span></div>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ ২</span></div>
         <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
       </div>
       <div class="nav-tabs">
@@ -542,7 +556,7 @@
     </div>
     <div class="footer-notice">
       <span class="golden-text rimit-text">Developed by RIMIT</span> <br>
-      <span class="golden-text">Exam Question: Made by Tey</span>
+      <span class="golden-text">Exam Question: Made by Rimit</span>
     </div>
   </div>
 </body>
