@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>uk-based</title>
+  <title>⚡ এইচএসসি পদার্থবিজ্ঞান ২য় পত্র - তাপগতিবিদ্যা এমসিকিউ পরীক্ষা</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,20 +43,20 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'GK';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'Hui';
 
     let currentUser = null;
     let userProfile = null;
     let warningCount = 0;
     
-    const examDuration = 270; 
+    const examDuration = 1800; 
     let totalSeconds = examDuration;
     let timerInterval = null;
     let userAnswers = {};
 
-    const totalQuestions = 3;
+    const totalQuestions = 1;
 
-    const answerKeys = {"q1":"B","q2":"D","q3":"C"};
+    const answerKeys = {"q1":"B"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -169,8 +169,8 @@
       }
     }
 
-    const examStartTimeStr = "2026-08-24T15:30:00+06:00";
-    const examEndTimeStr = "2026-08-04T15:35:00+06:00";
+    const examStartTimeStr = "2026-09-03T22:00:00+06:00";
+    const examEndTimeStr = "2026-09-04T23:00:00+06:00";
     const examStartTime = examStartTimeStr ? new Date(examStartTimeStr).getTime() : 0;
     const examEndTime = examEndTimeStr ? new Date(examEndTimeStr).getTime() : null;
 
@@ -611,23 +611,23 @@
 
   <div class="container">
     <div class="header-banner">
-      <h1>uk-based</h1>
-      <p>Pagol</p>
+      <h1>⚡ এইচএসসি পদার্থবিজ্ঞান ২য় পত্র - তাপগতিবিদ্যা এমসিকিউ পরীক্ষা</h1>
+      <p>৩০টি গুরুত্বপূর্ণ এমসিকিউ পরীক্ষা (৩০ মিনিট) ও লাইভ লিডারবোর্ড</p>
     </div>
     
     <!-- ১. নাম ও কলেজ ইনপুট স্ক্রিন -->
     <div id="profileSetupScreen" class="screen-section">
       <div class="card">
         <h3 style="color: var(--blue-marker); margin-bottom: 8px;">পরীক্ষার্থীর তথ্য</h3>
-        <p style="margin-bottom: 15px; color: #64748b; font-size: 0.85rem;">লিডারবোর্ডের জন্য আপনার সঠিক নাম ও কলেজের নাম দিন।</p>
+        <p style="margin-bottom: 15px; color: #64748b; font-size: 0.85rem;">লিডারবোর্ডের জন্য আপনার সঠিক নাম ও কলেজের নাম দিন.</p>
         
         <!-- পরীক্ষা শুরু ও শেষ সময়সূচি -->
         
         <div class="schedule-box">
           <div>📅 পরীক্ষার সময়সূচি:</div>
-          • <strong>পরীক্ষা শুরু:</strong> ২৪ আগস্ট ২০২৬, দুপুর ৩:৩০ টা<br>
-          • <strong>পরীক্ষা শেষ:</strong> ০৪ আগস্ট ২০২৬, দুপুর ৩:৩৫ টা<br>
-          • <strong>সময়সীমা:</strong> ৪.৫ মিনিট (৩টি প্রশ্ন)
+          • <strong>পরীক্ষা শুরু:</strong> ০৩ সেপ্টেম্বর ২০২৬, রাত ১০:০০ টা<br>
+          • <strong>পরীক্ষা শেষ:</strong> ০৪ সেপ্টেম্বর ২০২৬, রাত ১১:০০ টা<br>
+          • <strong>সময়সীমা:</strong> ৩০ মিনিট (১টি প্রশ্ন)
         </div>
 
         <div class="form-group">
@@ -645,9 +645,9 @@
     <!-- ২. পরীক্ষা নেওয়ার স্ক্রিন -->
     <div id="examArea" style="display: none; background: #f8fafc;">
       <div class="timer-bar">
-        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/3</div>
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/1</div>
         <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
-        <div class="timer-box" id="timeDisplay">4.5:00</div>
+        <div class="timer-box" id="timeDisplay">30:00</div>
       </div>
       
       <div class="notebook-paper">
@@ -665,34 +665,6 @@
               • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(খ)</span><br/> প্রমিত সমীকরণ $\frac{d^2x}{dt^2} + \omega^2 x = 0$ এর সাথে তুলনা করে পাই, $ \omega^2 = 16 \implies \omega = 4\text{ rad/s} $।
             </div>
           </div>
-        
-          <div class="mcq-card" id="qCard-2">
-            <div class="question-title">০২. Hui</div>
-            <div class="options-grid">
-              <label class="option-label"><input type="radio" name="q2" value="A"> (ক) $a+b^2$</label>
-              <label class="option-label"><input type="radio" name="q2" value="B"> (খ) C</label>
-              <label class="option-label"><input type="radio" name="q2" value="C"> (গ) A</label>
-              <label class="option-label"><input type="radio" name="q2" value="D"> (ঘ) D</label>
-            </div>
-            <div class="solution-notes">
-              <h4>ব্যাখ্যা ও সমাধান:</h4>
-              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ঘ)</span><br/> 
-            </div>
-          </div>
-        
-          <div class="mcq-card" id="qCard-3">
-            <div class="question-title">০৩. A</div>
-            <div class="options-grid">
-              <label class="option-label"><input type="radio" name="q3" value="A"> (ক) B</label>
-              <label class="option-label"><input type="radio" name="q3" value="B"> (খ) C</label>
-              <label class="option-label"><input type="radio" name="q3" value="C"> (গ) A</label>
-              <label class="option-label"><input type="radio" name="q3" value="D"> (ঘ) D</label>
-            </div>
-            <div class="solution-notes">
-              <h4>ব্যাখ্যা ও সমাধান:</h4>
-              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(গ)</span><br/> 
-            </div>
-          </div>
         </form>
       </div>
       
@@ -706,7 +678,7 @@
       <div class="result-summary">
         <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
         <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
-        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 3</span></div>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 1</span></div>
         <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
       </div>
       
