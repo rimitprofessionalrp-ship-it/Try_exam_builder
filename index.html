@@ -43,7 +43,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'physics-thermodynamics-mcq-v1';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'Jejwjwjwkwkwjw';
 
     let currentUser = null;
     let userProfile = null;
@@ -54,9 +54,9 @@
     let timerInterval = null;
     let userAnswers = {};
 
-    const totalQuestions = 4;
+    const totalQuestions = 9;
 
-    const answerKeys = {"q1":"B","q2":"A","q3":"A","q4":"A"};
+    const answerKeys = {"q1":"B","q2":"A","q3":"A","q4":"A","q5":"A","q6":"A","q7":"A","q8":"A","q9":"A"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -169,7 +169,7 @@
       }
     }
 
-    const examStartTimeStr = "2026-08-04T22:00:00+06:00";
+    const examStartTimeStr = "2026-05-04T22:00:00+06:00";
     const examEndTimeStr = "2026-09-04T23:00:00+06:00";
     const examStartTime = examStartTimeStr ? new Date(examStartTimeStr).getTime() : 0;
     const examEndTime = examEndTimeStr ? new Date(examEndTimeStr).getTime() : null;
@@ -505,7 +505,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Hind Siliguri', sans-serif; background-color: var(--bg-color); color: #0f172a; line-height: 1.6; padding: 10px; }
     
-    .container { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); overflow: hidden; min-height: 85vh; position: relative; }
+    .container { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); overflow: visible; min-height: 85vh; position: relative; }
     
     .header-banner { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; padding: 25px 20px; text-align: center; }
     .header-banner h1 { font-size: 1.5rem; font-weight: 700; color: #f8fafc; }
@@ -534,7 +534,10 @@
     .btn { padding: 12px 20px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; width: 100%; margin-top: 10px; }
     .btn-primary { background: var(--blue-marker); color: white; }
 
-    .timer-bar { position: fixed; top: 0; right:0; opacity:0.8; background: #ffffff; border-bottom: 2px solid var(--blue-marker); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; z-index: 90; }
+    .timer-bar { position: sticky; top:0; z-index:100;
+    
+    
+    background: #ffffff; border-bottom: 2px solid var(--blue-marker); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; z-index: 90; }
     .timer-box { font-size: 1.15rem; font-weight: 700; color: var(--badge-red); background: #fef2f2; padding: 4px 12px; border-radius: 20px; border: 1px solid #fca5a5; }
     .warning-badge { font-size: 0.85rem; background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 6px; border: 1px solid #ffedd5; font-weight: 600; }
     .answered-badge { font-size: 0.85rem; background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; border: 1px solid #bfdbfe; font-weight: 700; }
@@ -625,9 +628,9 @@
         
         <div class="schedule-box">
           <div>📅 পরীক্ষার সময়সূচি:</div>
-          • <strong>পরীক্ষা শুরু:</strong> ০৪ সেপ্টেম্বর ২০২৬, রাত ১০:০০ টা<br>
+          • <strong>পরীক্ষা শুরু:</strong> ০৪ মে ২০২৬, রাত ১০:০০ টা<br>
           • <strong>পরীক্ষা শেষ:</strong> ০৪ সেপ্টেম্বর ২০২৬, রাত ১১:০০ টা<br>
-          • <strong>সময়সীমা:</strong> ৩০ মিনিট (৪টি প্রশ্ন)
+          • <strong>সময়সীমা:</strong> ৩০ মিনিট (৯টি প্রশ্ন)
         </div>
 
         <div class="form-group">
@@ -645,7 +648,7 @@
     <!-- ২. পরীক্ষা নেওয়ার স্ক্রিন -->
     <div id="examArea" style="display: none; background: #f8fafc;">
       <div class="timer-bar">
-        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/4</div>
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/9</div>
         <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
         <div class="timer-box" id="timeDisplay">30:00</div>
       </div>
@@ -707,6 +710,76 @@
               • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
             </div>
           </div>
+        
+          <div class="mcq-card" id="qCard-5">
+            <div class="question-title">০৫. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q5" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q5" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q5" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q5" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-6">
+            <div class="question-title">০৬. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q6" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q6" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q6" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q6" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-7">
+            <div class="question-title">০৭. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q7" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q7" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q7" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q7" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-8">
+            <div class="question-title">০৮. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q8" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q8" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q8" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q8" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
+        
+          <div class="mcq-card" id="qCard-9">
+            <div class="question-title">০৯. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q9" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q9" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q9" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q9" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
         </form>
       </div>
       
@@ -720,7 +793,7 @@
       <div class="result-summary">
         <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
         <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
-        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 4</span></div>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 9</span></div>
         <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
       </div>
       
