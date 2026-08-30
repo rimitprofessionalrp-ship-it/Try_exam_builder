@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>⚡ এইচএসসি পদার্থবিজ্ঞান ২য় পত্র - তাপগতিবিদ্যা এমসিকিউ পরীক্ষা</title>
+  <title>Gk</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,20 +43,21 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'Jejwjwjwkwkwjw';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'Gl';
 
     let currentUser = null;
     let userProfile = null;
     let warningCount = 0;
     
-    const examDuration = 1800; 
+    const examDuration = 300; 
     let totalSeconds = examDuration;
     let timerInterval = null;
     let userAnswers = {};
+    let examStartTimeMs = null;
 
-    const totalQuestions = 9;
+    const totalQuestions = 10;
 
-    const answerKeys = {"q1":"B","q2":"A","q3":"A","q4":"A","q5":"A","q6":"A","q7":"A","q8":"A","q9":"A"};
+    const answerKeys = {"q1":"B","q2":"A","q3":"A","q4":"A","q5":"A","q6":"A","q7":"A","q8":"A","q9":"A","q10":"A"};
 
     function showScreen(screenId) {
       document.getElementById('profileSetupScreen').style.display = 'none';
@@ -169,7 +170,7 @@
       }
     }
 
-    const examStartTimeStr = "2026-05-04T22:00:00+06:00";
+    const examStartTimeStr = "2026-08-04T22:00:00+06:00";
     const examEndTimeStr = "2026-09-04T23:00:00+06:00";
     const examStartTime = examStartTimeStr ? new Date(examStartTimeStr).getTime() : 0;
     const examEndTime = examEndTimeStr ? new Date(examEndTimeStr).getTime() : null;
@@ -236,6 +237,7 @@
         startTime = nowTime;
         await setDoc(examRef, { startTime: serverTimestamp() }, { merge: true });
       }
+      examStartTimeMs = startTime;
 
       const draftRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'draft_answers');
       const draftSnap = await getDoc(draftRef);
@@ -326,8 +328,11 @@
           }
         }
 
+        const nowTime = (await getRealServerTime()) || Date.now();
+        const timeTaken = examStartTimeMs ? Math.max(0, Math.floor((nowTime - examStartTimeMs) / 1000)) : examDuration;
+
         const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
-        await setDoc(examRef, { score: score, timestamp: serverTimestamp(), autoSubmitted: true }, { merge: true });
+        await setDoc(examRef, { score: score, timeTaken: timeTaken, timestamp: serverTimestamp(), autoSubmitted: true }, { merge: true });
 
         const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid);
         await setDoc(lbRef, {
@@ -335,6 +340,7 @@
           name: userProfile ? userProfile.name : "পরীক্ষার্থী",
           college: userProfile ? userProfile.college : "অজানা",
           score: score,
+          timeTaken: timeTaken,
           timestamp: serverTimestamp()
         });
 
@@ -362,10 +368,13 @@
       }
       userAnswers = currentAnswers;
 
+      const nowTime = (await getRealServerTime()) || Date.now();
+      const timeTaken = examStartTimeMs ? Math.max(0, Math.floor((nowTime - examStartTimeMs) / 1000)) : examDuration;
+
       if (currentUser && userProfile) {
         try {
           const examRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'exam_status');
-          await setDoc(examRef, { score: score, timestamp: serverTimestamp(), terminated: isTerminated }, { merge: true });
+          await setDoc(examRef, { score: score, timeTaken: timeTaken, timestamp: serverTimestamp(), terminated: isTerminated }, { merge: true });
 
           const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid);
           await setDoc(lbRef, {
@@ -373,6 +382,7 @@
             name: userProfile.name,
             college: userProfile.college,
             score: score,
+            timeTaken: timeTaken,
             timestamp: serverTimestamp()
           });
         } catch(err) { console.error("Save Error:", err); }
@@ -413,7 +423,19 @@
         let lbData = [];
         snapshot.forEach(doc => lbData.push(doc.data()));
         
-        lbData.sort((a, b) => b.score - a.score);
+        lbData.sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          const timeA = (a.timeTaken !== undefined && a.timeTaken !== null) ? a.timeTaken : Infinity;
+          const timeB = (b.timeTaken !== undefined && b.timeTaken !== null) ? b.timeTaken : Infinity;
+          if (timeA !== timeB) {
+            return timeA - timeB;
+          }
+          const tA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : 0;
+          const tB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : 0;
+          return tA - tB;
+        });
 
         const tbody = document.getElementById('leaderboardBody');
         tbody.innerHTML = '';
@@ -421,7 +443,7 @@
         let myRank = '-';
 
         if(lbData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:#64748b;">এখনো কেউ পরীক্ষা দেয়নি। প্রথম পরীক্ষা দিয়ে লিডারবোর্ডের শীর্ষে আসো!</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color:#64748b;">এখনো কেউ পরীক্ষা দেয়নি। প্রথম পরীক্ষা দিয়ে লিডারবোর্ডের শীর্ষে আসো!</td></tr>';
             return;
         }
 
@@ -438,11 +460,19 @@
           else if(index === 1) medal = "🥈 ";
           else if(index === 2) medal = "🥉 ";
 
+          let formattedTime = '-';
+          if (row.timeTaken !== undefined && row.timeTaken !== null) {
+            const m = Math.floor(row.timeTaken / 60);
+            const s = row.timeTaken % 60;
+            formattedTime = `${m > 0 ? m + ' মি: ' : ''}${s} সে:`;
+          }
+
           tr.innerHTML = `
             <td style="text-align: center;"><div class="rank-badge">${medal}${index + 1}</div></td>
             <td style="font-weight: 600;">${row.name}</td>
             <td style="font-size: 0.85rem; color:#475569;">${row.college}</td>
             <td class="lb-score">${row.score}</td>
+            <td style="text-align: center; font-size: 0.85rem; font-weight: 600; color: #475569;">${formattedTime}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -614,7 +644,7 @@
 
   <div class="container">
     <div class="header-banner">
-      <h1>⚡ এইচএসসি পদার্থবিজ্ঞান ২য় পত্র - তাপগতিবিদ্যা এমসিকিউ পরীক্ষা</h1>
+      <h1>Gk</h1>
       <p>৩০টি গুরুত্বপূর্ণ এমসিকিউ পরীক্ষা (৩০ মিনিট) ও লাইভ লিডারবোর্ড</p>
     </div>
     
@@ -628,9 +658,9 @@
         
         <div class="schedule-box">
           <div>📅 পরীক্ষার সময়সূচি:</div>
-          • <strong>পরীক্ষা শুরু:</strong> ০৪ মে ২০২৬, রাত ১০:০০ টা<br>
+          • <strong>পরীক্ষা শুরু:</strong> ০৪ আগস্ট ২০২৬, রাত ১০:০০ টা<br>
           • <strong>পরীক্ষা শেষ:</strong> ০৪ সেপ্টেম্বর ২০২৬, রাত ১১:০০ টা<br>
-          • <strong>সময়সীমা:</strong> ৩০ মিনিট (৯টি প্রশ্ন)
+          • <strong>সময়সীমা:</strong> ৫ মিনিট (১০টি প্রশ্ন)
         </div>
 
         <div class="form-group">
@@ -648,9 +678,9 @@
     <!-- ২. পরীক্ষা নেওয়ার স্ক্রিন -->
     <div id="examArea" style="display: none; background: #f8fafc;">
       <div class="timer-bar">
-        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/9</div>
+        <div class="answered-badge" id="answeredBadge">উত্তর দেওয়া হয়েছে: 0/10</div>
         <div class="warning-badge" id="warningText">ট্যাব পরিবর্তন: 0/২</div>
-        <div class="timer-box" id="timeDisplay">30:00</div>
+        <div class="timer-box" id="timeDisplay">5:00</div>
       </div>
       
       <div class="notebook-paper">
@@ -780,6 +810,20 @@
               • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
             </div>
           </div>
+        
+          <div class="mcq-card" id="qCard-10">
+            <div class="question-title">১০. </div>
+            <div class="options-grid">
+              <label class="option-label"><input type="radio" name="q10" value="A"> (ক) </label>
+              <label class="option-label"><input type="radio" name="q10" value="B"> (খ) </label>
+              <label class="option-label"><input type="radio" name="q10" value="C"> (গ) </label>
+              <label class="option-label"><input type="radio" name="q10" value="D"> (ঘ) </label>
+            </div>
+            <div class="solution-notes">
+              <h4>ব্যাখ্যা ও সমাধান:</h4>
+              • <span class="blue-heading">সঠিক উত্তর:</span> <span class="highlight">(ক)</span><br/> 
+            </div>
+          </div>
         </form>
       </div>
       
@@ -793,7 +837,7 @@
       <div class="result-summary">
         <h3 style="color: #0f172a; margin-bottom: 5px;">পরীক্ষা সম্পন্ন ও ফলাফল সংরক্ষিত হয়েছে!</h3>
         <p style="color: #64748b; font-size: 0.9rem;">আপনার প্রাপ্ত নম্বর:</p>
-        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 9</span></div>
+        <div class="score-badge"><span id="scoreDisplayVal">0</span> <span style="font-size: 1.2rem; color: #64748b;">/ 10</span></div>
         <p style="font-size: 0.9rem; font-weight: 600; color: #0038a8; margin-top: 5px;">আপনার অবস্থান: <span id="userRankVal">-</span></p>
       </div>
       
@@ -805,7 +849,7 @@
       <div id="leaderboardTabContent">
         <div class="lb-container">
           <table>
-            <thead><tr><th style="width: 70px; text-align: center;">র‍্যাংক</th><th>নাম</th><th>কলেজ</th><th style="text-align: center;">নম্বর</th></tr></thead>
+            <thead><tr><th style="width: 70px; text-align: center;">র‍্যাংক</th><th>নাম</th><th>কলেজ</th><th style="text-align: center;">নম্বর</th><th style="text-align: center;">সময়</th></tr></thead>
             <tbody id="leaderboardBody"></tbody>
           </table>
         </div>
@@ -821,3 +865,4 @@
   </div>
 </body>
 </html>
+  
